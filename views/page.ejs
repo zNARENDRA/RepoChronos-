@@ -1,0 +1,15 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title><%= title %> · Repochronos</title><link rel="stylesheet" href="/app.css"><script src="/app.js" defer></script></head><body>
+<a class="skip" href="#main">Skip to content</a>
+<aside class="rail"><a href="/" class="brand"><span class="mark"><svg viewBox="0 0 30 30" aria-hidden="true"><path d="M8 22V8h10a5 5 0 0 1 0 10h-5l9 7" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="8" cy="22" r="2.7" fill="currentColor"/><circle cx="8" cy="8" r="2.7" fill="currentColor"/></svg></span>Repochronos</a>
+<div class="rail-label">WORKSPACE</div><a class="nav-item <%= section==='repositories'?'active':'' %>" href="/repositories"><svg><use href="/icons.svg#repo"/></svg>Repositories</a>
+<% if(repo){ %><div class="rail-label">REPOSITORY</div><nav><% for(const [key,name,icon] of nav){ %><a class="nav-item <%= section===key || (section==='bug' && key==='bugs')?'active':'' %>" href="<%= base %>/<%= key %>"><svg><use href="/icons.svg#<%= icon %>"/></svg><%= name %></a><% } %></nav><% } %>
+<div class="rail-footer"><span class="online"></span> Database connected<small><%= dbName %> · SQL</small></div></aside>
+<div class="shell"><header class="top"><div class="crumb"><svg><use href="/icons.svg#repo"/></svg><a href="/repositories">Workspace</a><span>/</span><b><%= section==='repositories'?'Repositories':repo.full_name %></b></div><span class="caps mode"><i></i> HISTORY LEDGER</span></header>
+<main id="main"><% if(notice){ %><div class="notice" role="status"><%= notice %></div><% } %>
+<% if(section==='overview'){ %><%- include('overview') %>
+<% } else if(section==='repositories'){ %><%- include('repositories') %>
+<% } else if(section==='history'){ %><%- include('history') %>
+<% } else if(section==='analysis'){ %><%- include('analysis') %>
+<% } else if(section==='bugs' || section==='bug'){ %><%- include('bugs') %>
+<% } else { %><%- include('sql') %><% } %></main>
+<footer>Repochronos <span>/</span> Repository intelligence ledger <b>All times UTC</b></footer></div></body></html>
