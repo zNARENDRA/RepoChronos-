@@ -1,0 +1,17 @@
+body { background:#f4f6f3; color:#233d30; font-family:system-ui,sans-serif; }
+.navbar { background:#19382b; color:#eaf3e6; }
+.navbar-brand small { font-size:.8rem; }
+h1 { letter-spacing:-.04em; font-weight:650; }
+h2 { font-size:1.2rem; margin-bottom:1rem; }
+.card { border-color:#dce4d9; border-radius:12px; box-shadow:0 2px 4px #163a1805; }
+.eyebrow { font-size:.72rem; letter-spacing:.12em; color:#52745d; margin-bottom:.4rem; text-transform:uppercase; }
+.nav-pills .nav-link { color:#2b6241; }
+.nav-pills .nav-link.active { background:#2e6946; }
+.btn-success { background:#2e6946; border-color:#2e6946; }
+th { font-size:.72rem; text-transform:uppercase; color:#5a7060!important; }
+td { font-size:.8rem; max-width:30rem; overflow-wrap:anywhere; }
+.chart { overflow:auto; }
+svg { min-width:500px; width:100%; max-height:230px; }
+pre { background:#19382b; color:#eaf3e6; padding:1.3rem; border-radius:8px; white-space:pre-wrap; }
+.auth-card { max-width:480px; margin-top:3rem; }
+a { color:#2e6946; }

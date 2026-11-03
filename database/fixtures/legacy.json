@@ -1,0 +1,114 @@
+{
+  "entries": [
+    [
+      13,
+      0,
+      "Start the field journal",
+      "README.md"
+    ],
+    [
+      12,
+      1,
+      "Add the notebook schema",
+      "db/notebooks.sql"
+    ],
+    [
+      11,
+      2,
+      "Create the entry editor",
+      "src/editor.js"
+    ],
+    [
+      10,
+      0,
+      "Add entry routing rules",
+      "src/router.js"
+    ],
+    [
+      9,
+      1,
+      "Index the notebook lookup",
+      "db/notebooks.sql"
+    ],
+    [
+      8,
+      2,
+      "Polish editor focus styles",
+      "ui/editor.css"
+    ],
+    [
+      7,
+      0,
+      "Document the export format",
+      "docs/export.md"
+    ],
+    [
+      7,
+      1,
+      "Cover empty notebooks",
+      "tests/notebook.js"
+    ],
+    [
+      6,
+      2,
+      "Align the toolbar controls",
+      "ui/editor.css"
+    ],
+    [
+      5,
+      0,
+      "Handle archived entries",
+      "src/router.js"
+    ],
+    [
+      5,
+      2,
+      "Add a shortcut for new entries",
+      "src/editor.js"
+    ],
+    [
+      4,
+      1,
+      "Index recent entries",
+      "db/entries.sql"
+    ],
+    [
+      3,
+      0,
+      "Refine notebook navigation",
+      "src/navigation.js"
+    ],
+    [
+      3,
+      2,
+      "Improve empty state copy",
+      "ui/empty.html"
+    ],
+    [
+      3,
+      1,
+      "Test the archive query",
+      "tests/notebook.js"
+    ],
+    [
+      2,
+      2,
+      "Restore editor selection",
+      "src/editor.js"
+    ],
+    [
+      1,
+      1,
+      "Fix stale notebook counts",
+      "db/notebooks.sql"
+    ],
+    [
+      0,
+      0,
+      "Simplify entry routing",
+      "src/router.js"
+    ]
+  ],
+  "branchy": "export function routeEntry(entry) {\n  if (!entry) return 'invalid';\n  if (entry.archived) return 'archive';\n  if (entry.draft) return 'drafts';\n  if (entry.private) return 'private';\n  if (entry.pinned) return 'pinned';\n  return 'inbox';\n}",
+  "normal": "export function entryTitle(entry) { return entry.title.trim(); }"
+}
