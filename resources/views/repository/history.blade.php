@@ -7,5 +7,5 @@
         </select></label><button class="btn btn-success">Filter</button>
     </form>
     @include('table',['rows'=>$history->items(),'columns'=>['path'=>'File','previous_path'=>'Previous path','kind'=>'Change','display_name'=>'Author','sha'=>'Commit','message'=>'Message','authored_at'=>'Authored (UTC)','additions'=>'+ Lines','deletions'=>'− Lines']])
-    {{ $history->links('pagination::bootstrap-5') }}
+    {{ $history->links('pagination::simple-bootstrap-5') }}
 </section>

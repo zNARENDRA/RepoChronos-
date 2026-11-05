@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
@@ -14,7 +15,11 @@ class RepositoryImporter
         if (config('repochronos.github_token')) {
             $request = $request->withToken(config('repochronos.github_token'));
         }
-        $response = $request->get('https://api.github.com'.$path);
+        try {
+            $response = $request->get('https://api.github.com'.$path);
+        } catch (ConnectionException $error) {
+            throw ValidationException::withMessages(['github' => 'GitHub could not be reached. Check the connection and retry. Completed commits are preserved.']);
+        }
         if ($allowEmpty && $response->status() === 409) {
             return $response;
         }
@@ -72,9 +77,12 @@ class RepositoryImporter
         }
         $page = ($last->page ?? 0) + 1;
         $response = $this->request($base.'?sha='.$head.'&per_page=10&page='.$page);
+        $summaries = $response->json();
+        $known = DB::table('commits')->where('repo_id', $repo->id)
+            ->whereIn('sha', array_column($summaries, 'sha'))->pluck('sha')->flip();
         $count = 0;
-        foreach ($response->json() as $summary) {
-            if (DB::table('commits')->where('repo_id', $repo->id)->where('sha', $summary['sha'])->exists()) {
+        foreach ($summaries as $summary) {
+            if (isset($known[$summary['sha']])) {
                 continue;
             }
             $path = $base.'/'.$summary['sha'].'?per_page=100';
@@ -105,19 +113,25 @@ class RepositoryImporter
             if (! $inserted) {
                 return false;
             }
+            $paths = collect($item['files'])->flatMap(fn ($file) => isset($file['previous_filename'])
+                ? [$file['filename'], $file['previous_filename']] : [$file['filename']])->unique()->sort()->values();
+            $ids = [];
+            foreach ($paths->chunk(500) as $chunk) {
+                DB::table('files')->insertOrIgnore($chunk->map(fn ($path) => ['repo_id' => $repoId, 'path' => $path])->all());
+                $ids += DB::table('files')->where('repo_id', $repoId)->whereIn('path', $chunk)->pluck('id', 'path')->all();
+            }
+            $changes = [];
             foreach ($item['files'] as $file) {
-                $old = isset($file['previous_filename']) ? $this->file($repoId, $file['previous_filename']) : null;
-                DB::table('changes')->insert(['commit_id' => $inserted[0]->id, 'file_id' => $this->file($repoId, $file['filename']), 'previous_file_id' => $old, 'kind' => $file['status'], 'additions' => $file['additions'], 'deletions' => $file['deletions'], 'blob_sha' => $file['sha'] ?? null]);
+                $changes[] = ['commit_id' => $inserted[0]->id, 'file_id' => $ids[$file['filename']],
+                    'previous_file_id' => isset($file['previous_filename']) ? $ids[$file['previous_filename']] : null,
+                    'kind' => $file['status'], 'additions' => $file['additions'], 'deletions' => $file['deletions'],
+                    'blob_sha' => $file['sha'] ?? null];
+            }
+            foreach (array_chunk($changes, 500) as $chunk) {
+                DB::table('changes')->insert($chunk);
             }
 
             return true;
-        });
-    }
-
-    private function file(int $repo, string $path): int
-    {
-        DB::table('files')->insertOrIgnore(['repo_id' => $repo, 'path' => $path]);
-
-        return DB::table('files')->where('repo_id', $repo)->where('path', $path)->value('id');
+        }, 3);
     }
 }

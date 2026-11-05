@@ -1,0 +1,18 @@
+RepoChronos faculty demonstration
+
+Ready-to-share MP4 with English narration and optional English subtitles.
+These are sample screens rendered from the real Blade templates with fictional in-memory values. This is an illustrated workflow, not proof of live database transactions.
+No records were inserted in Supabase.
+
+00:00 Sign in
+00:22 Connect a GitHub repository
+00:47 Import and inspect changes
+01:15 Analyze code complexity
+01:48 Compare historical measurements
+02:14 Report an observed bug
+02:39 Assign and track work
+03:04 Review resolution history
+03:29 Present the updated dashboard
+03:56 Explain the relational database
+
+Duration: 271.9 seconds.

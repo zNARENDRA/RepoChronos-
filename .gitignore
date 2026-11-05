@@ -1,6 +1,7 @@
 /.env
 /.env.*
 !/.env.example
+!/.env.production.example
 /vendor/
 /.laravel-scaffold/
 /.local/
@@ -16,3 +17,5 @@
 /database/*.sqlite*
 __pycache__/
 *.pyc
+
+/.venv/

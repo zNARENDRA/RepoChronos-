@@ -2,6 +2,16 @@
 
 use Illuminate\Support\Str;
 use Pdo\Mysql;
+use Pdo\Pgsql;
+
+// Native one-shot parameter execution avoids extra pooler round trips.
+$pgsqlOptions = [];
+$pgsqlOptions[PDO::ATTR_PERSISTENT] = (bool) env('DB_PERSISTENT', false);
+if (class_exists(Pgsql::class)) {
+    $pgsqlOptions[Pgsql::ATTR_DISABLE_PREPARES] = true;
+} elseif (defined('PDO::PGSQL_ATTR_DISABLE_PREPARES')) {
+    $pgsqlOptions[constant('PDO::PGSQL_ATTR_DISABLE_PREPARES')] = true;
+}
 
 return [
 
@@ -95,9 +105,12 @@ return [
             'charset' => env('DB_CHARSET', 'utf8'),
             'prefix' => '',
             'prefix_indexes' => true,
-            'search_path' => 'public,repochronos',
-            'timezone' => 'UTC',
+            // Set session defaults during connection startup instead of issuing
+            // two remote SET statements on every HTTP request.
+            'server_options' => ['search_path' => 'public,repochronos', 'timezone' => 'UTC'],
             'sslmode' => env('DB_SSLMODE', 'verify-full'),
+            'sslrootcert' => env('DB_SSLROOTCERT', env('PGSSLROOTCERT')),
+            'options' => $pgsqlOptions,
         ],
 
         'sqlsrv' => [

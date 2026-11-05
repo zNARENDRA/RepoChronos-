@@ -5,14 +5,16 @@ Laravel 13 / PHP 8.3+, Blade, Bootstrap 5 CSS, Supabase PostgreSQL, GitHub REST 
 
 ## Setup with Supabase
 
-1. Install PHP with pdo_pgsql, mbstring, xml, curl, intl, zip and fileinfo, Composer, and Python.
-2. Run `composer install` and `python -m pip install -r requirements.txt`.
-3. Copy `.env.example` to `.env`. Copy your **session pooler** host, database name, username and database password from the Supabase Connect panel into the DB_* variables. Use `DB_SSLMODE=verify-full`. If your project requires its CA, set the process environment `PGSSLROOTCERT` to the downloaded certificate path. The database role needs permission to create tables, functions, views and triggers.
-4. Run `php artisan key:generate`, then `php artisan migrate --force`.
-5. Set DEMO_EMAIL and a unique DEMO_PASSWORD of at least 12 characters. Optionally set DEMO_VIEWER_EMAIL and DEMO_VIEWER_PASSWORD. Run `php artisan repochronos:demo`.
-6. Run `php artisan serve --host=127.0.0.1 --port=8000` and open http://127.0.0.1:8000. Log in with the credentials you supplied. The seed never changes existing passwords.
+On Windows, after completing setup, double-click `Run-RepoChronos.bat` to check requirements, start Laravel and open the application. Keep the server window open while using it; press Ctrl+C to stop. If the app is already running on port 8000, the launcher opens it. Run `Run-RepoChronos.bat --check` to check configuration without opening a browser or starting a server. It selects PHP 8.3+ with `pdo_pgsql`, skipping incompatible PATH entries such as Herd Lite builds without PostgreSQL support. You can set `REPOCHRONOS_PHP` to the full path of a compatible php.exe to choose one explicitly. The launcher does not seed data or run migrations.
 
-The ignored local `.env` in this workspace contains generated owner and viewer demo credentials used during verification. Its DB settings point to local PostgreSQL for testing. Replace those settings to use your Supabase project. A hosted Supabase connection has not been verified.
+1. Install PHP with pdo_pgsql, mbstring, xml, curl, intl, zip and fileinfo, Composer, and Python.
+2. Run `composer install`, `python -m venv .venv`, then `.venv/Scripts/python -m pip install -r requirements.txt` on Windows. On Linux/macOS use `.venv/bin/python`. Set PYTHON_BINARY to the absolute path of that interpreter so the PHP server uses the same installed packages.
+3. Copy `.env.example` to `.env`. Copy your **session pooler** host, database name, username and database password from the Supabase Connect panel into the DB_* variables. Use `DB_SSLMODE=verify-full`. Download the database CA from Supabase Database Settings and set `DB_SSLROOTCERT` to its absolute path. The database role needs permission to create tables, functions, views and triggers.
+4. Run `php artisan key:generate`, then `php artisan migrate --force`.
+5. Keep `ALLOW_SAMPLE_DATA=false`. Standard migrations and `db:seed` create no example users, commits, measurements or bugs.
+6. Run `php artisan serve --host=127.0.0.1 --port=8000` and open http://127.0.0.1:8000. Register your own account, log in and connect your real GitHub repository. Click **Sync latest** to import its actual history.
+
+The workspace connects to the RepoChronos Supabase project with `verify-full` TLS. Old sample and verification records remain stored for historical preservation, but normal repository pages list and allow access only to GitHub-backed repositories. Existing account passwords remain unchanged. Use your existing login or register a personal account for the presentation.
 
 Supabase is the deployment database. Laravel connects directly with its PostgreSQL driver. No Supabase service key is needed. The custom schema is accessed through PHP. Auth tables have RLS enabled and anonymous Supabase roles are denied access. For HTTPS deployment, set APP_ENV=production, APP_URL to the HTTPS address and SESSION_SECURE_COOKIE=true. The database owner used for migrations can bypass RLS.
 
@@ -34,22 +36,22 @@ This administrative command only claims repositories that have no owner. Use the
 
 ## Examiner demonstration
 
-1. Log in as the demo owner. Open Fieldnotes to see the preserved original 18 commits and three authors, plus seven multilingual demo commits.
-2. Connect `octocat/Hello-World`. Click **Sync latest** to import its commits. Filter **Change history** by README and author. Repeating the import retains the same facts.
-3. Return to Fieldnotes. In **Complexity**, click **Analyze next 15 revisions** twice. Both supported and unsupported revisions are recorded. All measured functions appear, including scores of one. Warnings appear when the stored score exceeds the run's threshold.
-4. In **Compare revisions**, select src/route.py and its two commits. The function route changes from score 1 to score 6. The page shows function deltas and the file's measured trend.
-5. Report a bug, assign a contributor, mark it in progress, then resolve it with an imported commit. Expand its event history to see actors and timestamps. The dashboard updates unresolved and resolved totals.
-6. Add another registered account as an editor from Overview. Log in as the demo viewer to verify read access and the absence of write actions.
+1. Log in with your own account and open your real GitHub repository. For this workspace the approved presentation repository is `zNARENDRA/RepoChronos-`.
+2. Click **Sync latest** and, when available, **Continue import**. Filter **Change history** by an actual path and author. Repeating the import retains the same facts.
+3. In **Complexity**, run **Analyze next 15 revisions** until the desired imported revisions have results. Show supported and unsupported statuses and every stored measurement. Warnings depend on actual scores and the stored threshold.
+4. In **Compare revisions**, select a real source file and two imported commits that both changed it and have been analyzed. Show their actual scores, deltas and authors. A score can increase, decrease or stay the same.
+5. Report an issue you actually observed, assign a real contributor and mark it in progress. Resolve it only with an imported commit that fixes it. Expand event history to see actors and timestamps and check the updated dashboard.
+6. Register a second account and grant editor or viewer access from Overview. Verify that viewers can read and cannot write. Use the contributors that GitHub actually returns; do not invent additional developers.
 7. Inspect Overview for contributor counts, commit activity, historical warnings and complexity charts. Trend averages describe measured functions in changed files per commit, rather than a full repository snapshot.
 8. Open **SQL workbench**, then execute `db/examiner.sql` in the Supabase SQL editor.
 
 Complexity is a maintainability measure. It does not establish a defect or assign blame to the author of a change. Bug assignment is an explicit user action.
 
-## Offline seed and direct SQL
+## Real records and preserved test fixtures
 
-`php artisan repochronos:demo` inserts fixtures through Laravel into the configured database. No GitHub connection is needed for sample imports or sample analysis. The original sample identities and SHAs are preserved.
+The normal application has sample data disabled. `php artisan repochronos:demo` is blocked, the standard database seeder is empty, and registration does not create repositories or reports. A new workspace stays empty until a real GitHub repository is connected and imported. Dashboard counts come from that repository's stored records, including genuine zero counts.
 
-Alternatively, after migrations run `db/demo.sql` directly in the Supabase SQL editor. It inserts repository history and source text with conflict protection. Register an account and use the claim command to grant access. It intentionally contains no login credentials. The Artisan demo command additionally creates the example resolved bug if the sample has no bugs.
+Historical fixtures and `db/demo.sql` are retained for isolated automated testing and archival reference. Do not load them into the faculty workflow. PHPUnit explicitly enables fixtures inside its test process; normal configuration defaults to `ALLOW_SAMPLE_DATA=false`. `db/examiner.sql` filters repository reports to GitHub-backed records so archived sample and verification repositories are excluded.
 
 ## Data design
 
@@ -75,6 +77,8 @@ COMPLEXITY_THRESHOLD defaults to 5, so a score of 6 warns. Each run retains its 
 
 GitHub imports ten commits per HTTP request. Continue import resumes the pinned snapshot; Sync latest checks the latest default-branch head. Changed-file pagination is followed, and GitHub's 3,000-file ceiling produces an error rather than incomplete data. Optional GITHUB_TOKEN is server-side. If PHP reports a certificate issuer error, configure its CA trust store or set GITHUB_CA_BUNDLE to an official CA bundle path. TLS verification stays enabled. Credentials are never embedded in views.
 
+Coverage includes imported revisions with no analysis result. Pending counts use the installed Lizard version. Comparisons and dashboard metrics filter by that version so different analyzer versions are not mixed.
+
 Function comparison matches signatures. Renames and changed signatures may need manual interpretation. Only imported changed revisions are analyzed. Historical warnings count each flagged function revision, including older revisions.
 
 ## Tests
@@ -86,6 +90,18 @@ php artisan migrate --env=testing --force
 php artisan test
 ```
 
-The test database must have the same migrations. Tests use transactions and actual PostgreSQL constraints. They exercise Laravel authentication/access, full bug workflows, imports with API fixtures, Lizard subprocesses, comparisons, duplicate prevention and immutable history. They require Python and the pinned Lizard package. Run them on a dedicated test database.
+The test database must have the same migrations. Most tests use transactions and actual PostgreSQL constraints. The concurrency test intentionally commits a separately labeled verification repository so independent PHP processes can see it. They exercise Laravel authentication/access, full bug workflows, imports with API fixtures, Lizard subprocesses, comparisons, duplicate prevention and immutable history. They require Python and the pinned Lizard package. Run them on a dedicated test database or a designated verification project. Committed concurrency fixtures remain as append-only verification history.
 
-See REPORT.md for the actual verification results and remaining limitations.
+Repository sections load in place with a visible loading message. Rapid clicks keep only the latest destination queued; a failed or stalled request offers a normal link and leaves the interface usable. Optional navigation regression checks run with `node --test tests/section-navigation.test.cjs`. Node is only needed for those developer checks, with no packages or build step; deployment still requires only PHP, Python and PostgreSQL.
+
+The dashboard reads its statistics in one PostgreSQL statement after a live permission check. Statistics and permissions are not cached. Lizard version metadata alone is cached for 60 seconds; analysis and `repochronos:doctor --production` probe Python directly. After upgrading Lizard, run `php artisan cache:clear` or the doctor command to refresh the metadata immediately. Keep `CACHE_STORE=file` for the single-server deployment to avoid extra Supabase round trips. Imports insert files and changes in batches of up to 500 rows. Analysis processes up to 15 revisions using batched Python calls and commits the new runs and measurements together; a failed batch can be retried without changing historical records.
+
+Run `php artisan repochronos:verify --supabase` to check table access, the 13 history-protection triggers and every statement in db/examiner.sql through Laravel. This read-only command rejects local host settings and requires verify-full TLS.
+
+See DEMO.md for the five-feature examiner walkthrough and database design explanation. See REPORT.md for actual verification results and remaining limitations.
+
+## Production deployment
+
+For the local single-server launcher, `DB_PERSISTENT=true` reuses the verified Supabase connection across HTTP requests. PostgreSQL search path and UTC timezone are supplied in connection startup options, avoiding repeated remote SET statements. User authentication, permissions and statistics are still read on every request. A newly started worker needs one cold connection; later requests reuse it. Each PHP worker can retain a connection, so budget connections for production worker counts or set `DB_PERSISTENT=false`. PHPUnit forces this option off for isolated database tests. Restart the PHP server after changing it. History and measurement pagination use Previous/Next links to avoid a separate total-count query.
+
+Use DEPLOYMENT.md and .env.production.example for the single-server PHP-FPM/Nginx deployment. Run php artisan repochronos:doctor --production to check configuration and dependencies. The /up endpoint checks database access.

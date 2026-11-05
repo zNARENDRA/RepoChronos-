@@ -5,26 +5,40 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Services\ComplexityAnalyzer;
 use App\Services\RepositoryImporter;
+use App\Services\RepositoryOverview;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class RepositoryController extends Controller
 {
-    private function access(int $id, bool $write = false): object
+    private function access(int $id, bool $write = false, bool $checkpoint = false): object
     {
-        $repo = DB::table('repositories')->find($id);
+        abort_unless($id > 0 && $id <= 2147483647, 404);
+        $query = DB::table('repositories as r')
+            ->leftJoin('repository_members as m', function ($join) {
+                $join->on('m.repo_id', '=', 'r.id')->where('m.user_id', auth()->id());
+            })->where('r.id', $id)->select('r.*', 'm.role');
+        if ($checkpoint) {
+            $query->selectSub(DB::table('import_pages as p')
+                ->selectRaw("jsonb_build_object('head_sha',p.head_sha,'more',p.more)")
+                ->whereColumn('p.repo_id', 'r.id')
+                ->whereRaw("r.source_key <> ? AND m.role IN ('owner','editor')", ['sample'])
+                ->orderByDesc('p.imported_at')->limit(1), 'checkpoint');
+        }
+        $repo = $query->first();
         abort_unless($repo, 404);
-        $role = DB::table('repository_members')->where('repo_id', $id)->where('user_id', auth()->id())->value('role');
-        abort_unless($role && (! $write || in_array($role, ['owner', 'editor'])), 403);
-        $repo->role = $role;
+        abort_if(! config('repochronos.allow_sample_data') && ! str_starts_with($repo->source_key, 'github:'), 404);
+        abort_unless($repo->role && (! $write || in_array($repo->role, ['owner', 'editor'])), 403);
 
         return $repo;
     }
 
     public function index()
     {
-        $repos = DB::table('repositories as r')->join('repository_members as m', 'm.repo_id', '=', 'r.id')->where('m.user_id', auth()->id())->select('r.*', 'm.role')->get();
+        $repos = DB::table('repositories as r')->join('repository_members as m', 'm.repo_id', '=', 'r.id')->where('m.user_id', auth()->id())
+            ->when(! config('repochronos.allow_sample_data'), fn ($query) => $query->where('r.source_key', 'like', 'github:%'))
+            ->select('r.*', 'm.role')->orderByDesc('r.id')->get();
 
         return view('repositories', compact('repos'));
     }
@@ -40,6 +54,7 @@ class RepositoryController extends Controller
     public function import(Request $r, int $id, RepositoryImporter $importer)
     {
         $repo = $this->access($id, true);
+        set_time_limit(180);
         abort_if($repo->source_key === 'sample', 422);
         $data = $r->validate(['head' => 'nullable|regex:/^[a-f0-9]{40}$/']);
 
@@ -64,44 +79,66 @@ class RepositoryController extends Controller
 
     public function show(Request $r, int $id, string $tab = 'overview')
     {
-        $repo = $this->access($id);
+        $repo = $this->access($id, checkpoint: true);
         abort_unless(in_array($tab, ['overview', 'history', 'analysis', 'compare', 'bugs', 'sql']), 404);
-        $data = ['repo' => $repo, 'tab' => $tab];
-        $data['checkpoint'] = DB::table('import_pages')->where('repo_id', $id)->orderByDesc('imported_at')->first();
-        $data['people'] = DB::table('v_contributors')->where('repo_id', $id)->orderByDesc('commits')->get();
-        $data['commits'] = DB::table('commits')->where('repo_id', $id)->orderByDesc('authored_at')->get();
+        $engine = in_array($tab, ['overview', 'analysis', 'compare']) ? app(ComplexityAnalyzer::class)->engine() : null;
+        $data = ['repo' => $repo, 'tab' => $tab, 'engine' => $engine];
+        $data['checkpoint'] = $repo->checkpoint === null ? null : json_decode($repo->checkpoint, false, 512, JSON_THROW_ON_ERROR);
+        if ($tab === 'history') {
+            $data['people'] = DB::table('v_contributors')->where('repo_id', $id)->orderByDesc('commits')->get();
+        }
+        if ($tab === 'compare') {
+            $data['commits'] = DB::table('commits')->where('repo_id', $id)->orderByDesc('authored_at')->get();
+        }
         if ($tab === 'overview') {
-            $data['totals'] = DB::selectOne("SELECT
-    (SELECT count(*) FROM commits WHERE repo_id=?) AS commits,
-    (SELECT count(*) FROM files WHERE repo_id=?) AS files,
-    (SELECT count(*) FROM v_bug_current WHERE repo_id=? AND status<>'Fixed') AS open,
-    (SELECT count(*) FROM v_bug_current WHERE repo_id=? AND status='Fixed') AS fixed,
-    (SELECT count(*) FROM v_measurement_history WHERE repo_id=? AND warning) AS warnings", array_fill(0, 5, $id));
-            $data['trend'] = DB::table('v_complexity_trend')->where('repo_id', $id)->orderBy('authored_at')->get();
-            $data['activity'] = DB::table('v_daily_activity')->where('repo_id', $id)->orderByDesc('day')->limit(14)->get()->reverse();
+            $data += app(RepositoryOverview::class)->load($id, $engine);
         }
         if ($tab === 'history') {
+            $r->validate(['path' => 'nullable|string|max:300', 'author' => 'nullable|integer|min:1|max:2147483647', 'page' => 'nullable|integer|min:1|max:1000000']);
             $data['history'] = DB::table('v_file_history')->where('repo_id', $id)
                 ->when($r->filled('path'), fn ($q) => $q->where('path', 'ilike', '%'.$r->string('path').'%'))
                 ->when($r->filled('author'), fn ($q) => $q->where('developer_id', $r->integer('author')))
-                ->orderByDesc('authored_at')->paginate(30)->withQueryString();
+                ->orderByDesc('authored_at')->simplePaginate(30)->withQueryString();
         }
         if ($tab === 'analysis') {
-            $data['runs'] = DB::table('analysis_runs as a')->join('v_file_history as h', 'h.change_id', '=', 'a.change_id')->where('h.repo_id', $id)->select('a.*', 'h.path', 'h.sha')->orderByDesc('a.id')->get();
-            $data['measurements'] = DB::table('v_measurement_history')->where('repo_id', $id)->whereNotNull('measurement_id')->orderByDesc('authored_at')->paginate(40);
-            $data['pending'] = DB::table('changes as ch')->join('files as f', 'f.id', '=', 'ch.file_id')->where('f.repo_id', $id)->whereNotExists(fn ($q) => $q->selectRaw('1')->from('analysis_runs as a')->whereColumn('a.change_id', 'ch.id')->where('a.engine', 'lizard-1.25.0'))->count();
+            $r->validate(['page' => 'nullable|integer|min:1|max:1000000']);
+            $data['runs'] = DB::table('v_file_history as h')
+                ->leftJoin('analysis_runs as a', function ($join) use ($engine) {
+                    $join->on('a.change_id', '=', 'h.change_id')->where('a.engine', $engine);
+                })->where('h.repo_id', $id)
+                ->select('h.path', 'h.sha', 'a.engine', 'a.language', 'a.reason', 'a.threshold', 'a.analyzed_at')
+                ->selectRaw("COALESCE(a.status, 'not analyzed') AS status")
+                ->orderByDesc('h.authored_at')->get();
+            $data['measurements'] = DB::table('v_measurement_history')->where('engine', $engine)->where('repo_id', $id)->whereNotNull('measurement_id')->orderByDesc('authored_at')->simplePaginate(40);
+            $data['pending'] = $data['runs']->where('status', 'not analyzed')->count();
         }
         if ($tab === 'compare') {
             $data['files'] = DB::table('files')->where('repo_id', $id)->orderBy('path')->get();
             $data['comparisons'] = [];
             $data['fileTrend'] = collect();
             if ($r->filled('file')) {
-                $r->validate(['file' => 'integer', 'before' => 'nullable|integer', 'after' => 'nullable|integer']);
-                $file = DB::table('files')->where('repo_id', $id)->find($r->integer('file'));
+                $r->validate(['file' => 'integer', 'before' => 'required_with:file|integer', 'after' => 'required_with:file|integer']);
+                $file = $data['files']->firstWhere('id', $r->integer('file'));
                 abort_unless($file, 404);
-                $data['fileTrend'] = DB::select('SELECT sha,authored_at,round(avg(score),2) AS mean_complexity,max(score) AS max_complexity FROM v_measurement_history WHERE repo_id=? AND path=? AND measurement_id IS NOT NULL GROUP BY sha,authored_at ORDER BY authored_at', [$id, $file->path]);
                 foreach (['before', 'after'] as $side) {
-                    $data[$side] = DB::table('v_measurement_history')->where('repo_id', $id)->where('path', $file->path)->where('commit_id', $r->integer($side))->get();
+                    abort_unless($data['commits']->contains('id', $r->integer($side)), 422);
+                }
+                $commitIds = [$r->integer('before'), $r->integer('after')];
+                $changes = DB::table('changes as ch')->leftJoin('analysis_runs as a', function ($join) use ($engine) {
+                    $join->on('a.change_id', '=', 'ch.id')->where('a.engine', $engine);
+                })->where('ch.file_id', $file->id)->whereIn('ch.commit_id', $commitIds)
+                    ->select('ch.commit_id', 'a.status')->get()->keyBy('commit_id');
+                foreach (['before', 'after'] as $side) {
+                    $change = $changes->get($r->integer($side));
+                    $data['comparisonStatus'][$side] = $change
+                        ? ($change->status ?? 'not analyzed')
+                        : 'not changed in this commit';
+                }
+                $data['fileTrend'] = DB::select('SELECT sha,authored_at,round(avg(score),2) AS mean_complexity,max(score) AS max_complexity FROM v_measurement_history WHERE repo_id=? AND path=? AND engine=? AND measurement_id IS NOT NULL GROUP BY sha,authored_at ORDER BY authored_at', [$id, $file->path, $engine]);
+                $measurements = DB::table('v_measurement_history')->where('engine', $engine)->where('repo_id', $id)
+                    ->where('path', $file->path)->whereIn('commit_id', $commitIds)->get();
+                foreach (['before', 'after'] as $side) {
+                    $data[$side] = $measurements->where('commit_id', $r->integer($side))->values();
                 }
             }
         }
@@ -118,6 +155,10 @@ class RepositoryController extends Controller
         }
         if ($tab === 'bugs') {
             $data['bugs'] = DB::table('v_bug_current')->where('repo_id', $id)->orderByDesc('id')->get();
+            if ($repo->role !== 'viewer' && $data['bugs']->contains(fn ($bug) => ! $bug->fixed_at)) {
+                $data['people'] = DB::table('v_contributors')->where('repo_id', $id)->orderByDesc('commits')->get();
+                $data['commits'] = DB::table('commits')->where('repo_id', $id)->orderByDesc('authored_at')->get();
+            }
             $data['events'] = DB::table('bug_events as e')->join('bugs as b', 'b.id', '=', 'e.bug_id')->leftJoin('users as u', 'u.id', '=', 'e.actor_user_id')->leftJoin('developers as d', 'd.id', '=', 'e.developer_id')->leftJoin('commits as c', 'c.id', '=', 'e.commit_id')->where('b.repo_id', $id)->select('e.*', 'u.name as actor', 'd.display_name', 'c.sha')->orderBy('e.at')->get();
         }
         if ($tab === 'sql') {
@@ -131,6 +172,7 @@ class RepositoryController extends Controller
     public function analyze(int $id, ComplexityAnalyzer $analyzer)
     {
         $repo = $this->access($id, true);
+        set_time_limit(180);
         $count = $analyzer->run($repo);
 
         return back()->with('notice', "$count revisions processed. Previously recorded measurements are preserved.");
@@ -148,6 +190,7 @@ class RepositoryController extends Controller
     public function event(Request $r, int $id, int $bug)
     {
         $this->access($id, true);
+        abort_unless($bug > 0 && $bug <= 2147483647, 404);
         abort_unless(DB::table('bugs')->where('repo_id', $id)->where('id', $bug)->exists(), 404);
         $data = $r->validate(['kind' => 'required|in:assigned,progress,fixed', 'target' => 'nullable|integer']);
         if ($data['kind'] !== 'progress' && empty($data['target'])) {

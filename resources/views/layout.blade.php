@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'Workspace') · RepoChronos</title>
     <link rel="stylesheet" href="/bootstrap.min.css">
-    <link rel="stylesheet" href="/ledger.css">
+    <link rel="stylesheet" href="/ledger.css?v={{ filemtime(public_path('ledger.css')) }}">
+    @isset($repo)<script src="/section-navigation.js?v={{ filemtime(public_path('section-navigation.js')) }}" defer></script>@endisset
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>

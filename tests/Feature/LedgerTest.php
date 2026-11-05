@@ -30,11 +30,7 @@ class LedgerTest extends TestCase
         $this->assertGreaterThan(10, $count);
         $this->post("/r/$id/analysis")->assertRedirect();
         $this->assertEquals($count, DB::table('measurements')->count());
-        foreach (['python', 'java', 'C', 'C++', 'php'] as $language) {
-            // Lizard reader labels can group C and C++ together.
-            if (in_array($language, ['C', 'C++'])) {
-                continue;
-            }
+        foreach (['python', 'java', 'c', 'cpp', 'php'] as $language) {
             $this->assertTrue(DB::table('analysis_runs')->whereRaw('lower(language)=?', [strtolower($language)])->exists(), $language);
         }
         $this->assertTrue(DB::table('analysis_runs')->where('status', 'unsupported')->exists());
@@ -42,6 +38,13 @@ class LedgerTest extends TestCase
         $file = DB::table('files')->where('repo_id', $id)->where('path', 'src/route.py')->first();
         $commits = DB::table('v_file_history')->where('repo_id', $id)->where('path', 'src/route.py')->orderBy('authored_at')->pluck('commit_id');
         $this->get("/r/$id/compare?file=$file->id&before={$commits[0]}&after={$commits[1]}")->assertOk()->assertSee('route');
+        $change = DB::table('v_file_history')->where('commit_id', $commits[1])->where('path', 'src/route.py')->first();
+        $run = DB::table('analysis_runs')->insertGetId(['change_id' => $change->change_id, 'engine' => 'historical-test-version', 'language' => 'python', 'status' => 'analyzed', 'threshold' => 5]);
+        DB::table('measurements')->insert(['run_id' => $run, 'signature' => 'route( entry )', 'function_name' => 'route', 'line' => 1, 'score' => 99]);
+        $this->get("/r/$id/compare?file=$file->id&before={$commits[0]}&after={$commits[1]}")
+            ->assertViewHas('deltas', fn ($rows) => $rows->first()->delta === 5);
+        $this->get("/r/$id/overview")->assertViewHas('trend', fn ($rows) => $rows->max('max_complexity') < 99);
+        $this->get("/r/$id/compare?file=$file->id&before=99999999&after={$commits[1]}")->assertStatus(422);
         $this->post("/r/$id/bugs", ['title' => 'Focus regression', 'details' => 'Reproduction steps'])->assertRedirect();
         $bug = DB::table('bugs')->orderByDesc('id')->first();
         $developer = DB::table('v_contributors')->where('repo_id', $id)->first();
@@ -123,6 +126,29 @@ class LedgerTest extends TestCase
         app(DemoData::class)->load($user);
         $this->expectException(QueryException::class);
         DB::table('commits')->update(['message' => 'overwritten']);
+    }
+
+    public function test_sql_constraints_reject_history_edits_and_cross_repository_links(): void
+    {
+        $user = User::factory()->create();
+        $repo = app(DemoData::class)->load($user);
+        foreach (['UPDATE commits SET message=message', 'DELETE FROM warnings', 'TRUNCATE measurements'] as $sql) {
+            try {
+                DB::transaction(fn () => DB::statement($sql));
+                $this->fail('History edit was allowed.');
+            } catch (QueryException $error) {
+                $this->assertEquals('23514', $error->getCode());
+            }
+        }
+        $other = DB::table('repositories')->insertGetId(['source_key' => 'foreign:'.bin2hex(random_bytes(4)), 'full_name' => 'Foreign fixture']);
+        $file = DB::table('files')->insertGetId(['repo_id' => $other, 'path' => 'foreign.py']);
+        $commit = DB::table('commits')->where('repo_id', $repo)->first();
+        try {
+            DB::transaction(fn () => DB::table('changes')->insert(['commit_id' => $commit->id, 'file_id' => $file, 'kind' => 'added', 'additions' => 1, 'deletions' => 0]));
+            $this->fail('Cross-repository file link was allowed.');
+        } catch (QueryException $error) {
+            $this->assertEquals('23514', $error->getCode());
+        }
     }
 
     public function test_analyzer_measures_real_source(): void

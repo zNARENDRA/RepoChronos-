@@ -15,11 +15,11 @@
         <h3>Function score changes</h3>
         @include('table',['rows'=>$deltas])
         @foreach(['before','after'] as $side)
-            <details class="disclosure"><summary>{{ ucfirst($side) }} revision</summary>
+            <details class="disclosure"><summary>{{ ucfirst($side) }} revision · {{ $comparisonStatus[$side] }}</summary>
                 @include('table',['rows'=>$$side,'columns'=>['sha'=>'Commit','analysis_status'=>'Status','signature'=>'Signature','line'=>'Line','score'=>'Score','display_name'=>'Author']])
             </details>
         @endforeach
-        <h3 class="mt-4">File complexity trend</h3><div class="chart">{!! App\Services\Chart::bars($fileTrend,'mean_complexity','sha') !!}</div>
+        <h3 class="mt-4">File complexity trend</h3><div class="chart" tabindex="0" role="region" aria-label="File complexity trend chart">{!! App\Services\Chart::bars($fileTrend,'mean_complexity','sha') !!}</div>
         <details class="disclosure"><summary>Trend values</summary>@include('table',['rows'=>$fileTrend])</details>
     @endif
     <p class="hint">Choose two analyzed commits that changed the selected file. Functions are matched by signature.</p>

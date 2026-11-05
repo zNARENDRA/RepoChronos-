@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'allow_sample_data' => (bool) env('ALLOW_SAMPLE_DATA', false),
     'github_token' => env('GITHUB_TOKEN'),
     'github_ca' => env('GITHUB_CA_BUNDLE'),
     'python' => env('PYTHON_BINARY', 'python'),

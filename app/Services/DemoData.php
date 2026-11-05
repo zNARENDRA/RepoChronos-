@@ -9,6 +9,10 @@ class DemoData
 {
     public function load(User $owner): int
     {
+        if (! config('repochronos.allow_sample_data')) {
+            throw new \LogicException('Sample data is disabled. Connect a GitHub repository to import real history.');
+        }
+
         return DB::transaction(function () use ($owner) {
             DB::statement('SELECT pg_advisory_xact_lock(49721502)');
             DB::table('repositories')->insertOrIgnore(['source_key' => 'sample', 'full_name' => 'fieldnotes / notebook']);

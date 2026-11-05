@@ -1,5 +1,6 @@
 <?php
 
+use App\Exceptions\AnalysisUnavailable;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -17,10 +18,13 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (QueryException $error, Request $request) {
-            if (in_array($error->getCode(), ['23514', '23503', '23505'])) {
+            if ($request->isMethod('POST') && in_array($error->getCode(), ['23514', '23503', '23505'])) {
                 return back()->withErrors(['database' => 'Database rejected the update. Check permissions, related records, and the current bug status.']);
             }
+
+            return response()->view('errors.service', ['message' => 'The database request could not finish. Please retry shortly.'], 503);
         });
+        $exceptions->render(fn (AnalysisUnavailable $error) => response()->view('errors.service', ['message' => $error->getMessage()], 503));
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );

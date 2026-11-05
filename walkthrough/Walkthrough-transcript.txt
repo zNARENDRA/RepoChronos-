@@ -1,0 +1,68 @@
+Start RepoChronos
+A guided example with fictional values
+Double-click Run-RepoChronos.bat.
+Wait for the requirements check to pass.
+Open http://127.0.0.1:8000/ in your browser.
+
+1. Sign in
+Use your existing account or register
+Example name: Alex Student
+Example email: alex@example.com
+Example password: FacultyDemo!2026
+These are examples, not active login credentials.
+
+2. Connect your repository
+Repositories > Connect a repository
+Enter a GitHub URL or owner/name.
+Fictional example: alex-student/course-library
+Replace it with your real accessible repository.
+Click Connect and open the repository.
+
+3. Import commits
+Sync latest > Change history
+Click Sync latest. Use Continue import if offered.
+Inspect developer, file, commit and timestamp.
+Example: Alex changed library.py in a1b2c3d4.
+Filter by file path or developer. Re-sync avoids duplicates.
+
+4. Run complexity analysis
+Complexity > Analyze next 15 revisions
+Repeat until the required revisions are analyzed.
+Example: Python / calculate_fine / score 8.
+At threshold 5, score 8 receives a warning.
+Complexity measures risk; it does not prove a defect.
+
+5. Compare two commits
+Compare revisions > File, Before, After
+Choose a file changed by both selected commits.
+Analyze both revisions with the same Lizard version.
+Example: library.py / a1b2c3d4 > e5f6a7b8.
+Illustrated score: 4 > 8. All valid scores are stored.
+
+6. Register and assign a bug
+Bug tracker > Report a bug
+Title: Negative fine shown for an early return.
+Details: Return a book before its due date.
+Click Report. Select a contributor and click Assign.
+Click Mark in progress when work starts.
+
+7. Resolve with a fixing commit
+Push the fix > Sync latest > Bug tracker
+Import the actual fixing commit from GitHub.
+Example fixing commit: c9d0e1f2.
+Select it and click Resolve with commit.
+Event history shows users, assignment and elapsed time.
+
+8. Show the dashboard and SQL
+Overview > SQL workbench > Supabase
+Show contributions, trends and open/resolved bugs.
+Run db/examiner.sql in the Supabase SQL editor.
+Explain foreign keys, JOIN, GROUP BY, HAVING and views.
+Triggers protect historical records from changes.
+
+Ready for your presentation
+Your live database stays fresh
+This is an illustrated guide, not a screen recording.
+No dummy records were inserted into your database.
+Use real commits and observed bugs in the live demo.
+Internet access and GitHub API quota are required.

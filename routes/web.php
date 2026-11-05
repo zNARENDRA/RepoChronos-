@@ -4,6 +4,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RepositoryController;
 use Illuminate\Support\Facades\Route;
 
+Route::pattern('id', '[0-9]{1,10}');
+Route::pattern('bug', '[0-9]{1,10}');
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'form'])->name('login');
     Route::get('/register', fn () => view('auth', ['mode' => 'register']));

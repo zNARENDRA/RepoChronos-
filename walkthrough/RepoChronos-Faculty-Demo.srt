@@ -1,0 +1,231 @@
+1
+00:00:00,500 --> 00:00:04,258
+Start the application with Run RepoChronos dot bat.
+
+2
+00:00:04,258 --> 00:00:07,131
+Open the local address in your browser.
+
+3
+00:00:07,131 --> 00:00:10,741
+Sign in with your own account, or register first.
+
+4
+00:00:10,741 --> 00:00:13,615
+Here, Alex Student is a fictional user.
+
+5
+00:00:13,615 --> 00:00:21,351
+All records in this video are illustrative sample values rendered using the actual application templates.
+
+6
+00:00:22,958 --> 00:00:26,973
+On the repository page, expand Connect a repository.
+
+7
+00:00:26,973 --> 00:00:33,072
+Enter a real GitHub URL, or an owner slash repository name, then click Connect.
+
+8
+00:00:33,072 --> 00:00:36,160
+Course Library is our fictional example.
+
+9
+00:00:36,160 --> 00:00:40,483
+A successful connection gives your account owner access.
+
+10
+00:00:40,483 --> 00:00:46,659
+The live demonstration requires internet access and sufficient GitHub API quota.
+
+11
+00:00:48,292 --> 00:00:51,564
+Open the repository and click Sync latest.
+
+12
+00:00:51,564 --> 00:00:55,304
+Use Continue import if more pages are available.
+
+13
+00:00:55,304 --> 00:01:03,564
+Change history shows which developer changed each file, the commit, timestamp, and added or deleted lines.
+
+14
+00:01:03,564 --> 00:01:08,161
+In this example, Alex and Maya both changed library dot py.
+
+15
+00:01:08,161 --> 00:01:10,343
+Filter by file or developer.
+
+16
+00:01:10,343 --> 00:01:13,927
+Reimporting the same commit avoids duplicates.
+
+17
+00:01:15,542 --> 00:01:19,987
+Open Complexity and click Analyze next fifteen revisions.
+
+18
+00:01:19,987 --> 00:01:21,313
+Repeat as needed.
+
+19
+00:01:21,313 --> 00:01:27,318
+Lizard analyzes supported languages and stores every detected function score.
+
+20
+00:01:27,318 --> 00:01:32,621
+Here, a Python function has scores of four and eight in two commits.
+
+21
+00:01:32,621 --> 00:01:36,209
+With threshold five, eight receives a warning.
+
+22
+00:01:36,209 --> 00:01:38,626
+Book dot java is also analyzed.
+
+23
+00:01:38,626 --> 00:01:41,200
+README is explicitly unsupported.
+
+24
+00:01:41,200 --> 00:01:47,361
+Complexity indicates maintainability risk; it does not prove a software defect.
+
+25
+00:01:49,000 --> 00:01:54,167
+In Compare revisions, choose a file and two commits that both changed it.
+
+26
+00:01:54,167 --> 00:01:59,759
+Analyze both revisions using the same Lizard version first, then click Compare.
+
+27
+00:01:59,759 --> 00:02:05,493
+In our sample, calculate fine increases from four to eight, a difference of four.
+
+28
+00:02:05,493 --> 00:02:08,678
+The comparison reads historical measurements.
+
+29
+00:02:08,678 --> 00:02:12,925
+Earlier scores stay preserved when new commits are analyzed.
+
+30
+00:02:14,542 --> 00:02:17,566
+Open Bug tracker and expand Report a bug.
+
+31
+00:02:17,566 --> 00:02:20,737
+Enter a clear title and reproduction steps.
+
+32
+00:02:20,737 --> 00:02:26,269
+Our fictional report describes a negative fine when returning a book early.
+
+33
+00:02:26,269 --> 00:02:30,179
+Explain what you expected and what actually happened.
+
+34
+00:02:30,179 --> 00:02:31,506
+Submit the report.
+
+35
+00:02:31,506 --> 00:02:35,120
+The application records who reported it and when.
+
+36
+00:02:35,120 --> 00:02:38,587
+A complexity warning alone is not a bug report.
+
+37
+00:02:40,208 --> 00:02:45,175
+After reporting, select a repository contributor and click Assign.
+
+38
+00:02:45,175 --> 00:02:49,539
+In this example, Maya is assigned and work is in progress.
+
+39
+00:02:49,539 --> 00:02:52,098
+Mark in progress when work begins.
+
+40
+00:02:52,098 --> 00:02:58,570
+Once the actual fix has been pushed to GitHub, click Sync latest to import its commit.
+
+41
+00:02:58,570 --> 00:03:02,934
+Select that fixing commit, then click Resolve with commit.
+
+42
+00:03:04,542 --> 00:03:06,390
+The issue now shows Fixed.
+
+43
+00:03:06,390 --> 00:03:12,717
+Expand Event history to review assignment, progress, acting users, and the fixing commit.
+
+44
+00:03:12,717 --> 00:03:20,751
+Our fictional report was opened at ten thirty and resolved at twelve thirty, so the resolution time is two hours.
+
+45
+00:03:20,751 --> 00:03:23,239
+These timestamps are sample values.
+
+46
+00:03:23,239 --> 00:03:28,002
+The system records the sequence without overwriting earlier events.
+
+47
+00:03:29,625 --> 00:03:31,116
+Return to Overview.
+
+48
+00:03:31,116 --> 00:03:37,863
+Our sample now shows three commits, three files, zero open bugs, and one resolved bug.
+
+49
+00:03:37,863 --> 00:03:40,766
+Alex and Maya appear as contributors.
+
+50
+00:03:40,766 --> 00:03:44,846
+Complexity rises and then falls in the stored trend.
+
+51
+00:03:44,846 --> 00:03:50,259
+The earlier warning remains part of history even after a simpler fix.
+
+52
+00:03:50,259 --> 00:03:55,280
+Dashboard values in the live project come from Supabase records.
+
+53
+00:03:56,917 --> 00:04:02,017
+In SQL workbench, show files changed by more than one developer.
+
+54
+00:04:02,017 --> 00:04:08,791
+This query groups file history by path and uses HAVING to return collaborative files.
+
+55
+00:04:08,791 --> 00:04:12,457
+Library dot py has two authors in our example.
+
+56
+00:04:12,457 --> 00:04:19,071
+In Supabase, run the examiner SQL file to explain joins, keys, views, and triggers.
+
+57
+00:04:19,071 --> 00:04:24,809
+RepoChronos uses Laravel, Blade, Supabase PostgreSQL, and Python Lizard.
+
+58
+00:04:24,809 --> 00:04:30,786
+This illustrated demonstration inserted no records into your live database.

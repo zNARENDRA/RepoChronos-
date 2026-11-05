@@ -3,6 +3,7 @@
     $tabs=['overview'=>'Overview','history'=>'Change history','analysis'=>'Complexity','compare'=>'Compare revisions','bugs'=>'Bug tracker','sql'=>'SQL workbench'];
     $write=$repo->role!=='viewer';
     $base='/r/'.$repo->id;
+    $icons=['overview'=>'▦','history'=>'↳','analysis'=>'⌁','compare'=>'⇄','bugs'=>'◎','sql'=>'≡'];
 @endphp
 @section('title', $tabs[$tab].' · '.$repo->full_name)
 @section('content')
@@ -20,12 +21,21 @@
         @endif
     </div>
 </div>
-<nav class="section-nav" aria-label="Repository sections">
+<div class="repository-workspace">
+<aside class="workspace-sidebar">
+<p class="eyebrow">Repository</p>
+<nav class="section-nav" aria-label="Repository sections" data-repository="{{ $repo->id }}">
     @foreach($tabs as $key=>$label)
-        <a href="{{ $base }}/{{ $key }}" @if($tab===$key) aria-current="page" @endif>{{ $label }}</a>
+        <a href="{{ $base }}/{{ $key }}" aria-label="{{ $label }}" @if($tab===$key) aria-current="page" @endif><span class="nav-symbol" aria-hidden="true">{{ $icons[$key] }}</span><span>{{ $label }}</span><span class="nav-arrow" aria-hidden="true">↗</span></a>
     @endforeach
 </nav>
-<div class="tab-body">
+<div class="sidebar-note"><span class="orbit-mark" aria-hidden="true"><i></i><i></i><i></i></span><strong>Every change.<br>Every chapter.</strong><p>Your repository’s history, connected.</p></div>
+</aside>
+<div class="workspace-content">
+<p class="navigation-status visually-hidden" role="status" aria-live="polite"></p>
+<div class="tab-body" id="repository-section" tabindex="-1" aria-label="{{ $tabs[$tab] }}">
     @include('repository.'.$tab)
+</div>
+</div>
 </div>
 @endsection

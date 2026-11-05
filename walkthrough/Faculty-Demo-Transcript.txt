@@ -1,0 +1,32 @@
+RepoChronos faculty demonstration
+Illustrated sample workflow using actual Blade templates. Fictional data, not a recording of live database transactions.
+
+1. Sign in
+Start the application with Run RepoChronos dot bat. Open the local address in your browser. Sign in with your own account, or register first. Here, Alex Student is a fictional user. All records in this video are illustrative sample values rendered using the actual application templates.
+
+2. Connect a GitHub repository
+On the repository page, expand Connect a repository. Enter a real GitHub URL, or an owner slash repository name, then click Connect. Course Library is our fictional example. A successful connection gives your account owner access. The live demonstration requires internet access and sufficient GitHub API quota.
+
+3. Import and inspect changes
+Open the repository and click Sync latest. Use Continue import if more pages are available. Change history shows which developer changed each file, the commit, timestamp, and added or deleted lines. In this example, Alex and Maya both changed library dot py. Filter by file or developer. Reimporting the same commit avoids duplicates.
+
+4. Analyze code complexity
+Open Complexity and click Analyze next fifteen revisions. Repeat as needed. Lizard analyzes supported languages and stores every detected function score. Here, a Python function has scores of four and eight in two commits. With threshold five, eight receives a warning. Book dot java is also analyzed. README is explicitly unsupported. Complexity indicates maintainability risk; it does not prove a software defect.
+
+5. Compare historical measurements
+In Compare revisions, choose a file and two commits that both changed it. Analyze both revisions using the same Lizard version first, then click Compare. In our sample, calculate fine increases from four to eight, a difference of four. The comparison reads historical measurements. Earlier scores stay preserved when new commits are analyzed.
+
+6. Report an observed bug
+Open Bug tracker and expand Report a bug. Enter a clear title and reproduction steps. Our fictional report describes a negative fine when returning a book early. Explain what you expected and what actually happened. Submit the report. The application records who reported it and when. A complexity warning alone is not a bug report.
+
+7. Assign and track work
+After reporting, select a repository contributor and click Assign. In this example, Maya is assigned and work is in progress. Mark in progress when work begins. Once the actual fix has been pushed to GitHub, click Sync latest to import its commit. Select that fixing commit, then click Resolve with commit.
+
+8. Review resolution history
+The issue now shows Fixed. Expand Event history to review assignment, progress, acting users, and the fixing commit. Our fictional report was opened at ten thirty and resolved at twelve thirty, so the resolution time is two hours. These timestamps are sample values. The system records the sequence without overwriting earlier events.
+
+9. Present the updated dashboard
+Return to Overview. Our sample now shows three commits, three files, zero open bugs, and one resolved bug. Alex and Maya appear as contributors. Complexity rises and then falls in the stored trend. The earlier warning remains part of history even after a simpler fix. Dashboard values in the live project come from Supabase records.
+
+10. Explain the relational database
+In SQL workbench, show files changed by more than one developer. This query groups file history by path and uses HAVING to return collaborative files. Library dot py has two authors in our example. In Supabase, run the examiner SQL file to explain joins, keys, views, and triggers. RepoChronos uses Laravel, Blade, Supabase PostgreSQL, and Python Lizard. This illustrated demonstration inserted no records into your live database.

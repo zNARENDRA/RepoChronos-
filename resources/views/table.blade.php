@@ -13,7 +13,7 @@
                 <tr style="--order:{{ min($loop->index,7) }}">
                     @foreach($headings as $key=>$label)
                         @php $value=((array)$row)[$key] ?? null; @endphp
-                        <td>
+                        <td @class(['cell-long'=>in_array($key,['path','previous_path','message','function_name','signature','reason'])])>
                             @if(in_array($key,['sha','fix_sha']) && $value)<abbr class="hash" title="{{ $value }}">{{ substr($value,0,8) }}</abbr>
                             @elseif($key==='warning')<span class="{{ $value?'warning-tag':'' }}">{{ $value?'Warning':'—' }}</span>
                             @elseif(is_bool($value)){{ $value?'Yes':'No' }}
