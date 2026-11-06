@@ -9,11 +9,42 @@ use Tests\TestCase;
 
 class ConcurrentWritesTest extends TestCase
 {
+    private ?string $verificationSchema = null;
+
+    private ?User $verificationOwner = null;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // Separate sessions need committed fixtures. Keep them out of the app's history.
+        $this->verificationSchema = 'rc_verify_'.bin2hex(random_bytes(6));
+        $schema = $this->verificationSchema;
+        DB::transaction(function () use ($schema) {
+            DB::unprepared(str_replace('repochronos', $schema, file_get_contents(base_path('db/schema.sql'))));
+            DB::unprepared(str_replace('repochronos', $schema, file_get_contents(base_path('db/upgrade.sql'))));
+        });
+        DB::statement('SET search_path TO public, '.$schema);
+    }
+
+    protected function tearDown(): void
+    {
+        try {
+            DB::statement('SET search_path TO public, repochronos');
+            if ($this->verificationSchema !== null) {
+                DB::statement('DROP SCHEMA IF EXISTS '.$this->verificationSchema.' CASCADE');
+            }
+            $this->verificationOwner?->delete();
+        } finally {
+            parent::tearDown();
+        }
+    }
+
     private function race(array $payload): array
     {
         $gate = tempnam(sys_get_temp_dir(), 'rc-gate-');
         unlink($gate);
         $payload['gate'] = $gate;
+        $payload['schema'] = $this->verificationSchema;
         $workers = [];
         try {
             foreach (range(1, 2) as $i) {
@@ -56,8 +87,7 @@ class ConcurrentWritesTest extends TestCase
 
     public function test_simultaneous_import_analysis_and_fix_preserve_one_history(): void
     {
-        // Committed fixtures are intentional. Run on the dedicated test database.
-        $owner = User::factory()->create();
+        $owner = $this->verificationOwner = User::factory()->create();
         $repo = DB::table('repositories')->insertGetId(['source_key' => 'race:'.bin2hex(random_bytes(8)), 'full_name' => 'Concurrent verification']);
         DB::table('repository_members')->insert(['repo_id' => $repo, 'user_id' => $owner->id, 'role' => 'owner']);
         $source = "def score(x):\n    if x: return 1\n    return 0\n";

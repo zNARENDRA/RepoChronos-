@@ -11,6 +11,12 @@ $app = require __DIR__.'/../bootstrap/app.php';
 $app->make(Kernel::class)->bootstrap();
 
 $data = json_decode(stream_get_contents(STDIN), true, 512, JSON_THROW_ON_ERROR);
+if (isset($data['schema'])) {
+    if (! app()->environment('testing') || ! preg_match('/^rc_verify_[a-f0-9]{12}$/', $data['schema'])) {
+        throw new RuntimeException('Invalid verification schema.');
+    }
+    DB::statement('SET search_path TO public, '.$data['schema']);
+}
 DB::connection()->getPdo();
 echo "READY\n";
 flush();

@@ -12,6 +12,7 @@ if defined REPOCHRONOS_PHP (
     )
 )
 for /f "delims=" %%P in ('where php 2^>nul') do call :try_php "%%P"
+if not defined RC_PHP if exist "%~dp0.local\php\php.exe" call :try_php "%~dp0.local\php\php.exe"
 if not defined RC_PHP if exist "%LOCALAPPDATA%\SubscriptionManagement\php\php.exe" call :try_php "%LOCALAPPDATA%\SubscriptionManagement\php\php.exe"
 if not defined RC_PHP (
     echo No compatible PHP was found. PHP 8.3 or newer with pdo_pgsql is required.
@@ -46,7 +47,7 @@ if not errorlevel 1 (
 echo Starting RepoChronos at http://127.0.0.1:8000
 echo Keep this window open. Press Ctrl+C to stop the server.
 start "" "http://127.0.0.1:8000"
-"%RC_PHP%" artisan serve --host=127.0.0.1 --port=8000 --tries=1
+"%RC_PHP%" artisan serve --host=127.0.0.1 --port=8000 --tries=1 --no-reload
 if errorlevel 1 goto :failed
 exit /b 0
 
