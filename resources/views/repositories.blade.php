@@ -4,6 +4,11 @@
 <div class="page-intro">
     <p class="eyebrow">Workspace</p><h1>Repositories<em>.</em></h1>
     <p class="intro">Follow the code. Understand the changes.</p>
+    @if(auth()->user()->github_id)
+        <p class="minor-link">GitHub sign-in linked</p>
+    @else
+        <form method="post" action="/auth/github/link">@csrf<button class="btn btn-outline-success">Link GitHub for sign-in</button></form>
+    @endif
 </div>
 <div class="directory-grid">
 <section aria-label="Repository directory">

@@ -2,6 +2,17 @@
 
 return [
 
+    'github' => [
+        'client_id' => env('GITHUB_CLIENT_ID'),
+        'client_secret' => env('GITHUB_CLIENT_SECRET'),
+        'redirect' => env('GITHUB_REDIRECT_URI', 'http://127.0.0.1:8000/auth/github/callback'),
+        'guzzle' => [
+            'timeout' => 20,
+            'connect_timeout' => 10,
+            'verify' => env('GITHUB_CA_BUNDLE') ?: true,
+        ],
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Third Party Services

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\GitHubAuthController;
 use App\Http\Controllers\RepositoryController;
 use Illuminate\Support\Facades\Route;
 
@@ -11,8 +12,11 @@ Route::middleware('guest')->group(function () {
     Route::get('/register', fn () => view('auth', ['mode' => 'register']));
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,1');
     Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:6,1');
+    Route::get('/auth/github', [GitHubAuthController::class, 'redirect'])->name('github.login')->middleware('throttle:20,1');
 });
+Route::get('/auth/github/callback', [GitHubAuthController::class, 'callback'])->middleware('throttle:30,1');
 Route::middleware('auth')->group(function () {
+    Route::post('/auth/github/link', [GitHubAuthController::class, 'link'])->middleware('throttle:10,1');
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/', [RepositoryController::class, 'index']);
     Route::post('/repositories', [RepositoryController::class, 'connect']);

@@ -7,7 +7,7 @@ set "RC_PHP="
 if defined REPOCHRONOS_PHP (
     call :try_php "%REPOCHRONOS_PHP%"
     if not defined RC_PHP (
-        echo REPOCHRONOS_PHP must point to PHP 8.3 or newer with pdo_pgsql enabled.
+        echo REPOCHRONOS_PHP must point to PHP 8.4.1 or newer with pdo_pgsql enabled.
         goto :failed
     )
 )
@@ -15,7 +15,7 @@ for /f "delims=" %%P in ('where php 2^>nul') do call :try_php "%%P"
 if not defined RC_PHP if exist "%~dp0.local\php\php.exe" call :try_php "%~dp0.local\php\php.exe"
 if not defined RC_PHP if exist "%LOCALAPPDATA%\SubscriptionManagement\php\php.exe" call :try_php "%LOCALAPPDATA%\SubscriptionManagement\php\php.exe"
 if not defined RC_PHP (
-    echo No compatible PHP was found. PHP 8.3 or newer with pdo_pgsql is required.
+    echo No compatible PHP was found. PHP 8.4.1 or newer with pdo_pgsql is required.
     echo Herd Lite may not include the PostgreSQL driver. Install PHP with pdo_pgsql,
     echo then add it to PATH or set REPOCHRONOS_PHP to its full php.exe path.
     goto :failed
@@ -60,7 +60,7 @@ exit /b 1
 :try_php
 if defined RC_PHP exit /b 0
 if not exist "%~1" exit /b 0
-"%~1" -r "exit(PHP_VERSION_ID >= 80300 && extension_loaded('pdo_pgsql') ? 0 : 1);" >nul 2>nul
+"%~1" -r "exit(PHP_VERSION_ID >= 80401 && extension_loaded('pdo_pgsql') ? 0 : 1);" >nul 2>nul
 if errorlevel 1 exit /b 0
 set "RC_PHP=%~1"
 exit /b 0

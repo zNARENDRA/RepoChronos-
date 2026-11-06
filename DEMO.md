@@ -2,6 +2,8 @@
 
 Start Run-RepoChronos.bat, log in with your existing account and open http://127.0.0.1:8000/r/107/overview. Credentials stay in the ignored .env. On another installation, connect https://github.com/zNARENDRA/campus-library-repochronos-demo and use the repository ID assigned there.
 
+GitHub sign-in is optional and requires the developer's one-time OAuth App setup described in README.md. Until client credentials are configured, use email/password. To keep this existing owner's repository access when enabling GitHub login, first log in with your password and choose Link GitHub for sign-in. New GitHub users have their own empty workspace until a repository owner grants membership.
+
 This is a deliberately small demonstration repository. Alex Student and Maya Rao are fictional commit authors. Its source and commits are actual GitHub records imported using the API. Keep ALLOW_SAMPLE_DATA=false; do not run a seed or reset before presenting. Registration and the normal database seeder do not create project records.
 
 ## 1. Import and attribution

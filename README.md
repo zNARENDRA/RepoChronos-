@@ -1,11 +1,11 @@
 # RepoChronos
 Repository Health and Code Quality Tracking System
 
-Laravel 13 / PHP 8.3+, Blade, Bootstrap 5 CSS, Supabase PostgreSQL, GitHub REST API, and Lizard 1.25.0 on Python 3.10+. Every page and chart is rendered on the server. Bootstrap CSS is bundled locally.
+Laravel 13 / PHP 8.4.1+, Blade, Bootstrap 5 CSS, Supabase PostgreSQL, GitHub REST API, and Lizard 1.25.0 on Python 3.10+. Every page and chart is rendered on the server. Bootstrap CSS is bundled locally.
 
 ## Setup with Supabase
 
-On Windows, after completing setup, double-click `Run-RepoChronos.bat` to check requirements, start Laravel and open the application. Keep the server window open while using it; press Ctrl+C to stop. If the app is already running on port 8000, the launcher opens it. Run `Run-RepoChronos.bat --check` to check configuration without opening a browser or starting a server. It selects PHP 8.3+ with `pdo_pgsql`, skipping incompatible PATH entries such as Herd Lite builds without PostgreSQL support. You can set `REPOCHRONOS_PHP` to the full path of a compatible php.exe to choose one explicitly. The launcher does not seed data or run migrations.
+On Windows, after completing setup, double-click `Run-RepoChronos.bat` to check requirements, start Laravel and open the application. Keep the server window open while using it; press Ctrl+C to stop. If the app is already running on port 8000, the launcher opens it. Run `Run-RepoChronos.bat --check` to check configuration without opening a browser or starting a server. It selects PHP 8.4.1+ with `pdo_pgsql`, skipping incompatible PATH entries such as Herd Lite builds without PostgreSQL support. You can set `REPOCHRONOS_PHP` to the full path of a compatible php.exe to choose one explicitly. The launcher does not seed data or run migrations.
 
 1. Install PHP with pdo_pgsql, mbstring, xml, curl, intl, zip and fileinfo, Composer, and Python.
 2. Run `composer install`, `python -m venv .venv`, then `.venv/Scripts/python -m pip install -r requirements.txt` on Windows. On Linux/macOS use `.venv/bin/python`. Set PYTHON_BINARY to the absolute path of that interpreter so the PHP server uses the same installed packages.
@@ -19,6 +19,19 @@ The workspace connects to Supabase with `verify-full` TLS. The prepared faculty 
 Supabase is the deployment database. Laravel connects directly with its PostgreSQL driver. No Supabase service key is needed. The custom schema is accessed through PHP. Auth tables have RLS enabled and anonymous Supabase roles are denied access. For HTTPS deployment, set APP_ENV=production, APP_URL to the HTTPS address and SESSION_SECURE_COOKIE=true. The database owner used for migrations can bypass RLS.
 
 The connection search path puts **public first**, followed by repochronos. Laravel's authentication and migration tables stay in public, while the domain tables retain their original schema.
+
+## GitHub sign-in
+
+GitHub sign-in uses Laravel Socialite and an OAuth App registered by the developer of RepoChronos. Other GitHub users authorize that one app; they do not register their own OAuth Apps. Your existing email/password login stays available.
+
+1. In GitHub Settings → Developer settings → OAuth Apps, register RepoChronos. For this local installation use homepage `http://127.0.0.1:8000` and authorization callback `http://127.0.0.1:8000/auth/github/callback`.
+2. Put its `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` in the ignored `.env`. Set `GITHUB_REDIRECT_URI` to that exact callback. Always open the app at the same host (`127.0.0.1`, not a mixture with `localhost`) so the session cookie survives the round trip. Production needs its own HTTPS callback configuration.
+3. Run `composer install` and `php artisan migrate --force`, clear cached configuration if used, and restart the server.
+4. New users select **Continue with GitHub**. Existing users first log in with their password and select **Link GitHub for sign-in** in the repository directory. After linking, they can use GitHub on subsequent logins. Matching emails never automatically merge accounts.
+
+The OAuth App client secret is not a personal access token. `GITHUB_TOKEN` still serves the separate repository-import integration. Sign-in requests identity and verified primary email only (`user:email`), uses session state and PKCE, and never stores the returned OAuth access token. New GitHub accounts receive no repository memberships automatically. Existing repository roles remain in force. A unique nullable `users.github_id` associates an account with one GitHub identity; existing accounts and history are preserved. Users without a verified primary GitHub email can keep using email/password registration.
+
+If credentials are absent or authorization fails, the login page shows a friendly error and the password option remains usable. Completing an actual GitHub round trip requires valid OAuth App credentials; mocked provider tests alone do not establish that live authorization works.
 
 ## Upgrade an existing installation
 

@@ -7,6 +7,8 @@
         <p class="eyebrow">Workspace access</p>
         <h1>{{ $mode==='register'?'Create account':'Log in' }}<em>.</em></h1>
         <p class="intro">{{ $mode==='register'?'Create your RepoChronos account.':'Open your repository workspace.' }}</p>
+        <a class="btn btn-outline-success wide" href="{{ route('github.login') }}">Continue with GitHub</a>
+        <p class="minor-link">Or use your email and password</p>
         <form method="post" action="/{{ $mode }}" class="fields">
             @csrf
             @if($mode==='register')
